@@ -11,9 +11,10 @@ int main()
 {
 	const int PIXELSIZE = 32;
 	const int WIDTH = 10;
-	const int HEIGHT = 35;
+	const int HEIGHT = 25;
+	const int BORDER = 8;
 
-	sf::RenderWindow window(sf::VideoMode(WIDTH * PIXELSIZE, HEIGHT * PIXELSIZE + 50), "SFML works!");
+	sf::RenderWindow window(sf::VideoMode((WIDTH + 2 + 2 * BORDER) * PIXELSIZE, (HEIGHT + 2) * PIXELSIZE + 50), "SFML works!");
 	sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Green);
 

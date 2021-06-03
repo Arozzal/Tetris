@@ -24,6 +24,48 @@ Field::Field(int sizex, int sizey, int pixelSize, sf::RenderWindow* win)
 	
 	bodies = initBodies(SHAPECOUNT);
 
+	blockTexture.loadFromFile("block.png");
+
+	font.loadFromFile("small_pixel.ttf");
+	scoreLabel.setFont(font);
+	scoreNum.setFont(font);
+
+	linesLabel.setFont(font);
+	linesNum.setFont(font);
+
+	levelLabel.setFont(font);
+	levelNum.setFont(font);
+
+
+	scoreLabel.setString("SCORE");
+	incScore(0);
+
+	linesLabel.setString("LINES");
+	incLines(0);
+
+	levelLabel.setString("LEVEL");
+	incLevel(0);
+
+
+	int xpos = win->getSize().x / 2 + (sizex * pixelSize) / 2 + 100;
+	int ypos = 120;
+
+	scoreLabel.setPosition(xpos, ypos);
+	scoreNum.setPosition(xpos, ypos + 60 - 20);
+	scoreNum.setFillColor(sf::Color::Blue);
+
+	linesLabel.setPosition(xpos, ypos + 120);
+	linesNum.setPosition(xpos, ypos + 180 - 20);
+	linesNum.setFillColor(sf::Color::Green);
+
+	levelLabel.setPosition(xpos, ypos + 240);
+	levelNum.setPosition(xpos, ypos + 300 - 20);
+	levelNum.setFillColor(sf::Color::Yellow);
+
+	for (sf::Sprite& spr : shapes) {
+		spr.setTexture(blockTexture);
+		spr.setScale(2.0f, 2.0f);
+	}
 
 	memset(fieldArray, 0, sizex * sizey);
 
@@ -32,29 +74,21 @@ Field::Field(int sizex, int sizey, int pixelSize, sf::RenderWindow* win)
 	this->sizey = sizey;
 	this->pixelSize = pixelSize;
 
-
-	shapes[0].setSize(sf::Vector2f( pixelSize, pixelSize ));
-	shapes[0].setFillColor(sf::Color::Black);
-	shapes[1].setSize(sf::Vector2f( pixelSize, pixelSize ));
-	shapes[1].setFillColor(sf::Color::Cyan);
-	shapes[2].setSize(sf::Vector2f( pixelSize, pixelSize ));
-	shapes[2].setFillColor(sf::Color::Blue);
-	shapes[3].setSize(sf::Vector2f( pixelSize, pixelSize ));
-	shapes[3].setFillColor(sf::Color(255, 165, 0));
-	shapes[4].setSize(sf::Vector2f( pixelSize, pixelSize ));
-	shapes[4].setFillColor(sf::Color::Yellow);
-	shapes[5].setSize(sf::Vector2f( pixelSize, pixelSize ));
-	shapes[5].setFillColor(sf::Color::Green);
-	shapes[6].setSize(sf::Vector2f(pixelSize, pixelSize));
-	shapes[6].setFillColor(sf::Color::Magenta);
-	shapes[7].setSize(sf::Vector2f(pixelSize, pixelSize));
-	shapes[7].setFillColor(sf::Color::Red);
+	shapes[0].setColor(sf::Color(25, 25, 25));
+	shapes[1].setColor(sf::Color::Cyan);
+	shapes[2].setColor(sf::Color::Blue);
+	shapes[3].setColor(sf::Color(255, 165, 0));
+	shapes[4].setColor(sf::Color::Yellow);
+	shapes[5].setColor(sf::Color::Green);
+	shapes[6].setColor(sf::Color::Magenta);
+	shapes[7].setColor(sf::Color::Red);
+	shapes[8].setColor(sf::Color(128, 128, 128));
 }
 
 int Field::get(int posx, int posy)
 {
 	if (posx >= sizex || posy >= sizey || posx < 0 || posy < 0) {
-		return 1;
+		return 8;
 	}
 
 	return fieldArray[sizex * posy + posx];
@@ -178,15 +212,28 @@ void Field::update()
 		
 		render();
 
+		float elapsedTime = clock.getElapsedTime().asSeconds();
+
 		if ((keys & 0x10) != 0) {
-			if (clock.getElapsedTime().asSeconds() > 0.02) {
+			if (elapsedTime > 0.02) {
 				break;
 			}
 		}else{
-			if (clock.getElapsedTime().asSeconds() > turnTime) {
+			if (elapsedTime > turnTime) {
 				break;
 			}
 		}
+
+
+
+		
+		if (updateCycleCounter >= 500) {
+			turnTime *= 0.95;
+			incLevel(1);
+			updateCycleCounter = 0;
+		}
+
+		
 	}
 
 
@@ -215,6 +262,7 @@ void Field::resetBody()
 
 void Field::checkForLines()
 {
+	int lineCount = 0;
 	for (int y = sizey - 1; y > 0; y--) {
 		bool wholeLine = true;
 		for (int x = 0; x < sizex; x++) {
@@ -225,10 +273,15 @@ void Field::checkForLines()
 
 		if (wholeLine) {
 			moveLinesDown(y-1);
+			lineCount++;
 			y++;
 			render();
-			turnTime *= 0.95;
 		}
+	}
+
+	if (lineCount > 0) {
+		incScore(level * 40 * (lineCount + lineCount / 1.5f));
+		incLines(lineCount);
 	}
 }
 
@@ -243,6 +296,7 @@ void Field::moveLinesDown(int posy)
 
 bool Field::updateBody(int posx, int posy, BlockBody& bodie, Rotator& rotator)
 {
+	updateCycleCounter++;
 	for (int i = 0; i < activeBlocks.size(); i++) {
 		set(activeBlocks[i].first, activeBlocks[i].second, 0);
 	}
@@ -267,6 +321,7 @@ bool Field::updateBody(int posx, int posy, BlockBody& bodie, Rotator& rotator)
 		}
 	}
 
+	
 	return false;
 }
 
@@ -285,18 +340,43 @@ bool Field::isItColliding(int posx, int posy, BlockBody & bodie, Rotator & rotat
 	return false;
 }
 
+void Field::incScore(int score)
+{
+	this->score += score;
+	scoreNum.setString(std::to_string(this->score));
+}
+
+void Field::incLines(int lines)
+{
+	this->lines += lines;
+	linesNum.setString(std::to_string(this->lines));
+}
+
+void Field::incLevel(int level)
+{
+	this->level += level;
+	levelNum.setString(std::to_string(this->level));
+}
+
 
 
 
 void Field::render()
 {
-	for (int y = 0; y < sizey; y++) {
-		for (int x = 0; x < sizex; x++) {
-			int tempId = get(x, y);
-			shapes[tempId].setPosition(x * pixelSize, y * pixelSize + 50);
+	win->clear();
+	for (int y = 0; y < sizey + 2; y++) {
+		for (int x = 0; x < sizex + 2; x++) {
+			int tempId = get(x - 1, y - 1);
+			shapes[tempId].setPosition((x + 8) * pixelSize, y * pixelSize + 50);
 			win->draw(shapes[tempId]); 
 		}
 	}
+	win->draw(scoreLabel);
+	win->draw(scoreNum);
+	win->draw(linesLabel);
+	win->draw(linesNum);
+	win->draw(levelLabel);
+	win->draw(levelNum);
 	win->display();
 }
 

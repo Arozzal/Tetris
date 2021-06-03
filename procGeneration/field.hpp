@@ -28,17 +28,35 @@ class Field
 	int pixelSize;
 	int fieldMiddle;
 
+	int score = 0;
+	int lines = 0;
+	int level = 1;
+
 	int curX = 0;
 	int curY = 0;
 	SHAPE currentFigure = SH_I;
 	float turnTime = 0.6f;
+	int updateCycleCounter = 0;
+
+	sf::Texture blockTexture;
+	
+	sf::Font font;
+
+	sf::Text scoreLabel;
+	sf::Text scoreNum;
+
+	sf::Text linesLabel;
+	sf::Text linesNum;
+
+	sf::Text levelLabel;
+	sf::Text levelNum;
 
 	sf::RenderWindow* win;
 	rng_type rng;
 
 public:
 
-	sf::RectangleShape shapes[8];
+	sf::Sprite shapes[9];
 	std::vector<std::pair<int, int>> activeBlocks;
 	BlockBody* bodies;
 	Rotator rotator;
@@ -60,6 +78,9 @@ public:
 	void moveLinesDown(int posy);
 	bool updateBody(int posx, int posy, BlockBody& bodie, Rotator& rotator);
 	bool isItColliding(int posx, int posy, BlockBody& bodie, Rotator& rotator);
+	void incScore(int inc);
+	void incLines(int lines);
+	void incLevel(int level);
 	void render();
 
 
