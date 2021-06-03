@@ -36,6 +36,14 @@ Field::Field(int sizex, int sizey, int pixelSize, sf::RenderWindow* win)
 	levelLabel.setFont(font);
 	levelNum.setFont(font);
 
+	gameOverLabel1.setFont(font);
+	gameOverLabel1.setCharacterSize(36);
+	gameOverLabel1.setString("Game Over");
+	gameOverLabel1.setPosition(300, 200);
+	gameOverLabel2.setFont(font);
+	gameOverLabel2.setCharacterSize(36);
+	gameOverLabel2.setString("Press SPACE to restart");
+	gameOverLabel2.setPosition(200, 300);
 
 	scoreLabel.setString("SCORE");
 	incScore(0);
@@ -104,13 +112,33 @@ void Field::set(int posx, int posy, int id)
 	fieldArray[sizex * posy + posx] = id;
 }
 
-SHAPE Field::getRandShape()
+int Field::getRandNum()
 {
 	static std::uniform_int_distribution<rng_type::result_type> udist(0, SHAPECOUNT - 2);
 	rng_type::result_type random_number = udist(rng);
+	return random_number;
+}
 
+SHAPE Field::getRandShape(int index, bool update)
+{
+	if (update) {
+		if (shapeIds[0] == -1) {
+			for (int i = 0; i < 10; i++) {
+				shapeIds[i] = getRandNum() + 1;
+			}
+		}
+		else {
+			for (int i = 0; i < 9; i++) {
+				shapeIds[i] = shapeIds[i + 1];
+			}
 
-	return SHAPE(random_number + 1);
+			shapeIds[9] = getRandNum() + 1;
+		}
+	}
+
+	return SHAPE(shapeIds[index]);
+
+	std::cerr << "incorrect index number " << index << std::endl;
 }
 
 char Field::checkKeyboard()
@@ -176,7 +204,14 @@ void Field::update()
 	static sf::Clock clock;
 	clock.restart();
 
-	
+	if (isGameOver()) {
+		if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Space)) {
+			setRestard();
+		}
+
+		return;
+	}
+		
 
 	while (true) {
 		char keys = checkKeyboard();
@@ -245,7 +280,7 @@ void Field::update()
 		resetBody();
 		checkForLines();
 		if (isItColliding(curX, curY, bodies[currentFigure], rotator)) {
-			exit(0);
+			setGameOver();
 		}
 	}
 }
@@ -256,7 +291,12 @@ void Field::resetBody()
 	curX = fieldMiddle;
 	activeBlocks.clear();
 	rotator.set(0);
-	currentFigure = getRandShape();
+	currentFigure = getRandShape(0, true);
+
+	for (int i = 1; i < 9; i++) {
+		shapeNext[i - 1] = getRandShape(i, false);
+	}
+
 	std::cout << currentFigure << std::endl;
 }
 
@@ -371,12 +411,33 @@ void Field::render()
 			win->draw(shapes[tempId]); 
 		}
 	}
+	
+	
 	win->draw(scoreLabel);
 	win->draw(scoreNum);
 	win->draw(linesLabel);
 	win->draw(linesNum);
 	win->draw(levelLabel);
 	win->draw(levelNum);
+
+	for (int j = 0; j < 9; j++) {
+		for (int x = 0; x < bodies[shapeNext[j]].gridSizeX; x++) {
+			for (int y = 0; y < bodies[shapeNext[j]].gridSizeY; y++) {
+
+				if (bodies[shapeNext[j]].get(x, y, 0) == true) {
+					shapes[shapeNext[j]].setPosition(x * pixelSize + 40, y * pixelSize + 40 + 130 * j);
+					win->draw(shapes[shapeNext[j]]);
+				}
+
+			}
+		}
+	}
+	
+	if (isGameOver()) {
+		win->draw(gameOverLabel1);
+		win->draw(gameOverLabel2);
+	}
+
 	win->display();
 }
 

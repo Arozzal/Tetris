@@ -38,6 +38,11 @@ class Field
 	float turnTime = 0.6f;
 	int updateCycleCounter = 0;
 
+	int shapeIds[10] = {-1,-1,-1,-1,-1,-1,-1,-1,-1,-1, };
+
+	bool gameOver = false;
+	bool restard = false;
+
 	sf::Texture blockTexture;
 	
 	sf::Font font;
@@ -51,8 +56,13 @@ class Field
 	sf::Text levelLabel;
 	sf::Text levelNum;
 
+	sf::Text gameOverLabel1;
+	sf::Text gameOverLabel2;
+
 	sf::RenderWindow* win;
 	rng_type rng;
+
+	SHAPE shapeNext[9];
 
 public:
 
@@ -62,14 +72,18 @@ public:
 	Rotator rotator;
 	sf::Texture tex;
 
-	
+	bool isGameOver() { return gameOver; }
+	void setGameOver() { gameOver = true; }
+	bool isRestard() { return restard; }
+	void setRestard() { restard = true; }
 
 
 	Field(int sizex, int sizey, int pixelsize, sf::RenderWindow* win);
 	int get(int posx, int posy);
 	void set(int posx, int posy, int id);
 
-	SHAPE getRandShape();
+	int getRandNum();
+	SHAPE getRandShape(int index, bool update = false);
 
 	char checkKeyboard();
 	void update();

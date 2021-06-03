@@ -14,11 +14,11 @@ int main()
 	const int HEIGHT = 25;
 	const int BORDER = 8;
 
-	sf::RenderWindow window(sf::VideoMode((WIDTH + 2 + 2 * BORDER) * PIXELSIZE, (HEIGHT + 2) * PIXELSIZE + 50), "SFML works!");
+	sf::RenderWindow window(sf::VideoMode((WIDTH + 2 + 2 * BORDER) * PIXELSIZE, (HEIGHT + 2) * PIXELSIZE + 50), "Tetris!");
 	sf::CircleShape shape(100.f);
 	shape.setFillColor(sf::Color::Green);
 
-	Field field(WIDTH, HEIGHT, PIXELSIZE, &window);
+	Field* field = new Field(WIDTH, HEIGHT, PIXELSIZE, &window);
 
 	srand(time(NULL));
 
@@ -36,9 +36,15 @@ int main()
 		}
 
 
-		field.update();
+		field->update();
 
-		field.render();
+		field->render();
+
+		if (field->isRestard()) {
+			delete field;
+			field = new Field(WIDTH, HEIGHT, PIXELSIZE, &window);
+		}
+
 	}
 
 	return 0;
